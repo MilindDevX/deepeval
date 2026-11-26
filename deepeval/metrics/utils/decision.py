@@ -20,6 +20,7 @@ from deepeval.config.eval_mode import (
     EvalMode,
     resolve_eval_mode,
 )
+from deepeval.config.voice_eval_mode import VoiceEvalMode
 from deepeval.errors import ContextWindowExceededError, DeepEvalError
 from deepeval.models import DeepEvalBaseLLM
 from deepeval.metrics.base_metric import (
@@ -109,6 +110,10 @@ def effective_eval_mode(metric: Any) -> EvalMode:
     or a user's own subclass) cannot honour `system_one`, so it runs as
     `hybrid`: Jev at its decision points, the LLM covering a failed call."""
     mode = getattr(metric, "eval_mode", None)
+    if isinstance(mode, VoiceEvalMode):
+        # A voice metric's `eval_mode` picks whether an audio decision model
+        # rechecks its events; it never uses Jev, so it runs as plain `llm`.
+        return EvalMode.LLM
     mode = mode if isinstance(mode, EvalMode) else resolve_eval_mode(mode)
     if mode is EvalMode.SYSTEM_ONE and not has_whole_metric_form(metric):
         return EvalMode.HYBRID

@@ -176,6 +176,21 @@ def test_wired_metric_keeps_system_one():
     assert effective_eval_mode(metric) is EvalMode.SYSTEM_ONE
 
 
+@pytest.mark.parametrize("configured", [None, "system_one", "hybrid"])
+def test_voice_metric_eval_mode_is_not_read_as_a_jev_mode(
+    monkeypatch, configured
+):
+    # A voice metric's `eval_mode` is a `VoiceEvalMode` (`deterministic` or
+    # `hybrid` audio checks). It must never be resolved as a Jev mode, or
+    # evaluate() raises "Unsupported eval_mode" for every voice metric.
+    from deepeval.metrics import AbruptCutoffMetric
+
+    if configured is not None:
+        monkeypatch.setenv("DEEPEVAL_EVAL_MODE", configured)
+    metric = AbruptCutoffMetric(use_speech_detection=False)
+    assert effective_eval_mode(metric) is EvalMode.LLM
+
+
 ###############################################
 # Trace sent to Jev
 ###############################################
